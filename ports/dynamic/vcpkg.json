@@ -1,0 +1,15 @@
+{
+  "name": "dynamic",
+  "version-string": "1.0.0",
+  "port-version": 1,
+  "description": "Dynamic succinct/compressed data structures",
+  "homepage": "https://github.com/xxsds/DYNAMIC",
+  "license": "MIT",
+  "supports": "linux | osx",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    }
+  ]
+}
