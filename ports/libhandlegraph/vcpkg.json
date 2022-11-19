@@ -1,0 +1,19 @@
+{
+  "name": "libhandlegraph",
+  "version-string": "0.0.1",
+  "port-version": 1,
+  "description": "Library for the Handle Graph abstraction",
+  "homepage": "https://github.com/vgteam/libhandlegraph",
+  "license": "MIT",
+  "supports": "linux | osx",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
+}
