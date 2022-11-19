@@ -1,0 +1,330 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index e90d1c9..8a780fb 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -3,15 +3,16 @@ cmake_minimum_required(VERSION 3.10)
+ # We can't use CMake 3.11 until we no longer have to run on Ubuntu 18.04.
+ 
+ include(FindPkgConfig)
++include(CMakePackageConfigHelpers)
+ 
+ # Make MACOSX_RPATH on explicitly, so non-installed libraries use @rpath in install name
+ set(CMAKE_MACOSX_RPATH ON)
+ 
+ # Project's name
+-project(bdsg)
++project(bdsg VERSION 0.3.0)
+ 
+-option(RUN_DOXYGEN "Build Doxygen files required for Breathe-based docs" ON)
+-option(BUILD_PYTHON_BINDINGS "Compile the bdsg Python module" ON)
++option(RUN_DOXYGEN "Build Doxygen files required for Breathe-based docs" OFF)
++option(BUILD_PYTHON_BINDINGS "Compile the bdsg Python module" OFF)
+ option(OPTIMIZE "Build with optimization" ON)
+ 
+ # TODO: We can only do out-of-source builds!
+@@ -82,20 +83,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+   
+   set (OMP_INCLUDE_FLAGS "-I${OMP_INCLUDE_PATH}")
+   set (OMP_LIB_FLAGS "-L${OMP_LIB_PATH}")
+-  
+-  # We also need manual libdl for some reason, so find it properly
+-  find_path(DL_LIB_PATH libdl.dylib
+-            PATHS "${HOMEBREW_PREFIX}/lib" /opt/local/lib /usr/local/lib /usr/lib /lib
+-            REQUIRED)
+-  if ("${DL_LIB_PATH}" STREQUAL "")
+-    # REQUIRED is a new CMake feature
+-    message(FATAL_ERROR "Could not find libdl.dylib")
+-  else()
+-    message("Found libdl libraries in ${DL_LIB_PATH}")
+-  endif()
+-  
+-  set (DL_LIB_FLAGS "-L${DL_LIB_PATH}")
+-  
+   set (OpenMP_C "${CMAKE_C_COMPILER}")
+   set (OpenMP_C_FLAGS " -Xpreprocessor -fopenmp ${OMP_INCLUDE_FLAGS} ${OMP_LIB_FLAGS}")
+   set (OpenMP_C_LIB_NAMES "libomp" "libgomp" "libiomp5")
+@@ -113,7 +100,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+   
+   # Mac needs libdl and libomp when linking the library and a hint on where to look for them
+   # Mac doesn't have $ORIGIN for RPaths. We might not be able to produce a working Mac wheel for Python bindings.
+-  set(PLATFORM_EXTRA_LIB_FLAGS -ldl -lomp ${DL_LIB_FLAGS} ${OMP_LIB_FLAGS})
++  set(PLATFORM_EXTRA_LIB_FLAGS -ldl -lomp ${OMP_LIB_FLAGS})
+   
+   # Mac needs install names set after installation
+   SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+@@ -149,41 +136,132 @@ include_directories("${PROJECT_SOURCE_DIR}")
+ # Add external projects
+ include(ExternalProject)
+ 
+-# sdsl-lite (gives an "sdsl" target)
+-set(BUILD_SHARED_LIBS ON CACHE BOOL "Build sdsl-lite shared libraries")
+-add_subdirectory("${bdsg_DIR}/deps/sdsl-lite")
+-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+-    # It produces divsufsort and divsufsort64 targets that don't know they need OMP on Mac.
+-    set_target_properties(divsufsort PROPERTIES LINK_FLAGS "-lomp")
+-    set_target_properties(divsufsort64 PROPERTIES LINK_FLAGS "-lomp")
++# sdsl-lite (gives an "sdsl::sdsl" target)
++if(sdsl_INCLUDE_DIRS)
++  set(sdsl_FIND_QUIETLY TRUE)
++else()
++  # If sdsl_INCLUDE_DIRS is not set, this searches for the header/library file.
++  find_path(sdsl_INCLUDE_DIRS sdsl/config.hpp)
++  find_library(sdsl_LIBRARIES sdsl)
++  if(sdsl_FOUND)
++    if(sdsl_VERSION)
++      message(STATUS "Found sdsl (version ${sdsl_VERSION})")
++    else()
++      message(STATUS "Found sdsl (version unknown)")
++    endif(sdsl_VERSION)
++  endif(sdsl_FOUND)
++endif(sdsl_INCLUDE_DIRS)
++
++## handle the QUIETLY and REQUIRED arguments and set sdsl_FOUND to TRUE if
++## all listed variables are TRUE
++include(FindPackageHandleStandardArgs)
++find_package_handle_standard_args(sdsl DEFAULT_MSG sdsl_INCLUDE_DIRS sdsl_LIBRARIES)
++
++mark_as_advanced(sdsl_FOUND sdsl_VERSION sdsl_INCLUDE_DIRS sdsl_LIBRARIES)
++
++# Define `sdsl::sdsl` imported target
++if(sdsl_FOUND AND NOT TARGET sdsl::sdsl)
++  add_library(sdsl::sdsl INTERFACE IMPORTED)
++  set_target_properties(sdsl::sdsl PROPERTIES
++    INTERFACE_INCLUDE_DIRECTORIES "${sdsl_INCLUDE_DIRS}"
++    INTERFACE_LINK_LIBRARIES "${sdsl_LIBRARIES}"
++    INTERFACE_LINK_DIRECTORIES "${sdsl_LIBRARY_DIRS}")
+ endif()
+ 
+ # hopscotch_map (required by DYNAMIC, gives a "tsl::hopscotch_map" target)
+-add_subdirectory("${bdsg_DIR}/deps/hopscotch-map")
++find_package(tsl-hopscotch-map REQUIRED)
+ 
+-# DYNAMIC (header only)
+-# Does not ship its own install step or define a target, so we make our own target
+-add_library(dynamic INTERFACE)
+-target_include_directories(dynamic INTERFACE "${bdsg_DIR}/deps/DYNAMIC/include")
+-target_link_libraries(dynamic INTERFACE tsl::hopscotch_map)
++## Dynamic
++if(dynamic_INCLUDE_DIRS)
++  set(dynamic_FIND_QUIETLY TRUE)
++else()
++  # If dynamic_INCLUDE_DIRS is not set, this searches for the header/library file.
++  find_path(dynamic_INCLUDE_DIRS dynamic/dynamic.hpp)
++  if(dynamic_FOUND)
++    if(dynamic_VERSION)
++      message(STATUS "Found dynamic (version ${dynamic_VERSION})")
++    else()
++      message(STATUS "Found dynamic (version unknown)")
++    endif(dynamic_VERSION)
++  endif(dynamic_FOUND)
++endif(dynamic_INCLUDE_DIRS)
++
++## handle the QUIETLY and REQUIRED arguments and set dynamic_FOUND to TRUE if
++## all listed variables are TRUE
++include(FindPackageHandleStandardArgs)
++find_package_handle_standard_args(dynamic DEFAULT_MSG dynamic_INCLUDE_DIRS)
++
++mark_as_advanced(dynamic_FOUND dynamic_VERSION dynamic_INCLUDE_DIRS)
++
++# Define `dynamic::dynamic` imported target
++if(dynamic_FOUND AND NOT TARGET dynamic::dynamic)
++  add_library(dynamic::dynamic INTERFACE IMPORTED)
++  set_target_properties(dynamic::dynamic PROPERTIES
++    INTERFACE_INCLUDE_DIRECTORIES "${dynamic_INCLUDE_DIRS}")
++endif()
+ 
+-# libhandlegraph (full build using its cmake config)
+-# Produces handlegraph_shared and handlegraph_static targets (as well as handlegraph_objs)
+-add_subdirectory("${bdsg_DIR}/deps/libhandlegraph")
++## handlegraph
++find_package(libhandlegraph CONFIG REQUIRED)
+ 
+-# BBHash perfect hasher (header only)
+-# Does not ship its own install step or define a target, so we make our own target
+-add_library(bbhash INTERFACE)
+-target_include_directories(bbhash INTERFACE "${bdsg_DIR}/deps/BBHash/")
+-# We would be able to use public_header for the one header, but that's not allowed with IMPORTED libraries.
++## BBHash
++if(bbhash_INCLUDE_DIRS)
++  set(bbhash_FIND_QUIETLY TRUE)
++else()
++  # If bbhash_INCLUDE_DIRS is not set, this searches for the header/library file.
++  find_path(bbhash_INCLUDE_DIRS BooPHF.h)
++  if(bbhash_FOUND)
++    if(bbhash_VERSION)
++      message(STATUS "Found BBHash (version ${bbhash_VERSION})")
++    else()
++      message(STATUS "Found BBHash (version unknown)")
++    endif(bbhash_VERSION)
++  endif(bbhash_FOUND)
++endif(bbhash_INCLUDE_DIRS)
++
++## handle the QUIETLY and REQUIRED arguments and set bbhash_FOUND to TRUE if
++## all listed variables are TRUE
++include(FindPackageHandleStandardArgs)
++find_package_handle_standard_args(bbhash DEFAULT_MSG bbhash_INCLUDE_DIRS)
++
++mark_as_advanced(bbhash_FOUND bbhash_VERSION bbhash_INCLUDE_DIRS)
++
++# Define `bbhash::bbhash` imported target
++if(bbhash_FOUND AND NOT TARGET bbhash::bbhash)
++  add_library(bbhash::bbhash INTERFACE IMPORTED)
++  set_target_properties(bbhash::bbhash PROPERTIES
++    INTERFACE_INCLUDE_DIRECTORIES "${bbhash_INCLUDE_DIRS}")
++endif()
+ 
+-# sparsepp (header only)
+-# Does not ship its own install step or define a target, so we make our own target
+-add_library(sparsepp INTERFACE)
+-target_include_directories(sparsepp INTERFACE "${bdsg_DIR}/deps/sparsepp/")
++## sparsepp (header only)
++if(sparsepp_INCLUDE_DIRS)
++  set(sparsepp_FIND_QUIETLY TRUE)
++else()
++  # If sparsepp_INCLUDE_DIRS is not set, this searches for the header/library file.
++  find_path(sparsepp_INCLUDE_DIRS BooPHF.hpp)
++  if(sparsepp_FOUND)
++    if(sparsepp_VERSION)
++      message(STATUS "Found sparsepp (version ${sparsepp_VERSION})")
++    else()
++      message(STATUS "Found sparsepp (version unknown)")
++    endif(sparsepp_VERSION)
++  endif(sparsepp_FOUND)
++endif(sparsepp_INCLUDE_DIRS)
++
++## handle the QUIETLY and REQUIRED arguments and set sparsepp_FOUND to TRUE if
++## all listed variables are TRUE
++include(FindPackageHandleStandardArgs)
++find_package_handle_standard_args(sparsepp_MSG sparsepp_INCLUDE_DIRS)
++
++mark_as_advanced(sparsepp_FOUND sparsepp_VERSION sparsepp_INCLUDE_DIRS)
++
++# Define `sparsepp::sparsepp` imported target
++if(sparsepp_FOUND AND NOT TARGET sparsepp::sparsepp)
++  add_library(sparsepp::sparsepp INTERFACE IMPORTED)
++  set_target_properties(sparsepp::sparsepp PROPERTIES
++    INTERFACE_INCLUDE_DIRECTORIES "${sparsepp_INCLUDE_DIRS}")
++endif()
+ 
+-# mio (header only)
+-add_subdirectory("${bdsg_DIR}/deps/mio")
++find_package(mio CONFIG REQUIRED)
+ 
+ if (BUILD_PYTHON_BINDINGS)
+     # Binder (because some generated bindings depend on headers packaged with Binder)
+@@ -263,9 +341,6 @@ if (BUILD_PYTHON_BINDINGS)
+ endif()
+ 
+ 
+-#set(CMAKE_BUILD_TYPE Release)
+-set(CMAKE_BUILD_TYPE Debug)
+-
+ # set up our target executable and specify its dependencies and includes
+ add_library(bdsg_objs OBJECT
+   ${bdsg_DIR}/src/eades_algorithm.cpp
+@@ -293,14 +368,12 @@ set(bdsg_INCLUDES
+ 
+ # Targets we depend on that are real library targets that we can install.
+ set(bdsg_TARGET_DEPS
+-  sdsl
+-  tsl::hopscotch_map
+-  dynamic
+-  handlegraph_shared
+-  bbhash
+-  sparsepp
+-  mio::mio
+-  PkgConfig::Jansson)
++  ${sdsl_LIBRARIES}
++  $<BUILD_INTERFACE:tsl::hopscotch_map>;$<INSTALL_INTERFACE:tsl::hopscotch_map>
++  $<BUILD_INTERFACE:handlegraph::handlegraph_shared>;$<INSTALL_INTERFACE:handlegraph::handlegraph_shared>
++  $<BUILD_INTERFACE:mio::mio>;$<INSTALL_INTERFACE:mio::mio>
++  $<BUILD_INTERFACE:PkgConfig::Jansson>;$<INSTALL_INTERFACE:PkgConfig::Jansson>
++  )
+ 
+ set(bdsg_LIBS
+   ${bdsg_TARGET_DEPS}
+@@ -310,23 +383,17 @@ if (BUILD_PYTHON_BINDINGS)
+     add_dependencies(bdsg_objs binder)
+ endif()
+ 
+-target_include_directories(bdsg_objs PUBLIC ${bdsg_INCLUDES})
++target_include_directories(bdsg_objs PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/bdsg/include>;$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>)
+ set_target_properties(bdsg_objs PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+ 
+ if (CMAKE_MAJOR_VERSION EQUAL "3" AND (CMAKE_MINOR_VERSION EQUAL "10" OR CMAKE_MINOR_VERSION EQUAL "11"))
+     # Before CMake 3.12 we can't ise target_link_libraries on an object library to convey the need to use depencies' include directories
+-    get_target_property(sdsl_INCLUDE sdsl INTERFACE_INCLUDE_DIRECTORIES)
+-    target_include_directories(bdsg_objs PUBLIC ${sdsl_INCLUDE})
+-    get_target_property(hopscotch_map_INCLUDE tsl::hopscotch_map INTERFACE_INCLUDE_DIRECTORIES)
+-    target_include_directories(bdsg_objs PUBLIC ${hopscotch_map_INCLUDE})
+-    get_target_property(dynamic_INCLUDE dynamic INTERFACE_INCLUDE_DIRECTORIES)
+-    target_include_directories(bdsg_objs PUBLIC ${dynamic_INCLUDE})
+-    get_target_property(handlegraph_INCLUDE handlegraph_shared INTERFACE_INCLUDE_DIRECTORIES)
+-    target_include_directories(bdsg_objs PUBLIC ${handlegraph_INCLUDE})
+-    get_target_property(bbhash_INCLUDE bbhash INTERFACE_INCLUDE_DIRECTORIES)
+-    target_include_directories(bdsg_objs PUBLIC ${bbhash_INCLUDE})
+-    get_target_property(sparsepp_INCLUDE sparsepp INTERFACE_INCLUDE_DIRECTORIES)
+-    target_include_directories(bdsg_objs PUBLIC ${sparsepp_INCLUDE})
++    target_include_directories(bdsg_objs PUBLIC ${sdsl_INCLUDE_DIRS})
++    target_include_directories(bdsg_objs PUBLIC tsl::hopscotch_map)
++    target_include_directories(bdsg_objs PUBLIC dynamic::dynamic)
++    target_include_directories(bdsg_objs PUBLIC handlegraph::handlegraph_shared)
++    target_include_directories(bdsg_objs PUBLIC bbhash::bbhash)
++    target_include_directories(bdsg_objs PUBLIC sparsepp::sparsepp)
+ else()
+     # Set all the libs as public dependencies of the object library
+     target_link_libraries(bdsg_objs PUBLIC ${bdsg_LIBS})
+@@ -345,15 +412,31 @@ set_target_properties(libbdsg PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/
+ # actual library. On Mac, we always need to do this, because you can't link a
+ # library there without the libraries it depends on at runtime.
+ target_link_libraries(libbdsg PUBLIC ${bdsg_LIBS})
++target_link_directories(libbdsg PUBLIC ${sdsl_LIBRARY_DIRS})
+ 
+ 
+ # Remember to bring along the includes
+-target_include_directories(libbdsg PUBLIC ${bdsg_INCLUDES})
++target_include_directories(libbdsg PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/bdsg/include>;$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>)
++
++# Creating the package configuration file
++configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/libbdsg-config.cmake.in
++	"${CMAKE_CURRENT_BINARY_DIR}/libbdsg-config.cmake"
++	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libbdsg)
++# Generating the version file for the configuration file
++write_basic_package_version_file(
++	"${CMAKE_CURRENT_BINARY_DIR}/libbdsg-config-version.cmake"
++	VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
++	COMPATIBILITY AnyNewerVersion)
++# Install generated configuration files
++install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libbdsg-config.cmake"
++	"${CMAKE_CURRENT_BINARY_DIR}/libbdsg-config-version.cmake"
++	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libbdsg)
+ 
+ # This is what we want to actually install for users.
+ # Dependencies from add_subdirectory install themselves, and the interface
+ # targets we make are header-only and get their heraders copied later.
+ install(TARGETS libbdsg 
++        EXPORT libbdsg-targets
+         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+         PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+         PRIVATE_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+@@ -361,16 +444,10 @@ install(TARGETS libbdsg
+ # Install headers separately. See <https://stackoverflow.com/a/54285948>
+ install(DIRECTORY ${bdsg_DIR}/include/bdsg
+         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+-# Install headers from all dependencies. Make sure to use a trailing slash to
+-# dump all contents rather than the directory. Don't install Binder's includes
+-# since we don't need headers for the Python module.
+-install(DIRECTORY "${bdsg_DIR}/deps/DYNAMIC/include/"
+-                  "${bdsg_DIR}/deps/BBHash/"
+-                  "${bdsg_DIR}/deps/sparsepp/sparsepp"
+-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+-        FILES_MATCHING
+-        PATTERN "*.hpp"
+-        PATTERN "*.h")
++
++install(EXPORT libbdsg-targets
++	NAMESPACE libbdsg::
++	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libbdsg)
+ 
+ add_executable(test_libbdsg
+   ${bdsg_DIR}/src/test_libbdsg.cpp)
