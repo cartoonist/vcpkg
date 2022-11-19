@@ -1,0 +1,18 @@
+diff --git a/libhandlegraph-config.cmake.in b/libhandlegraph-config.cmake.in
+new file mode 100644
+index 0000000..87b5cc0
+--- /dev/null
++++ b/libhandlegraph-config.cmake.in
+@@ -0,0 +1,12 @@
++@PACKAGE_INIT@
++
++include(CMakeFindDependencyMacro)
++
++if(NOT TARGET handlegraph::handlegraph)
++  include("${CMAKE_CURRENT_LIST_DIR}/libhandlegraph-targets.cmake")
++endif()
++
++check_required_components(libhandlegraph)
++
++include("${CMAKE_CURRENT_LIST_DIR}/libhandlegraph-config-version.cmake")
++message(STATUS "Found libhandlegraph (version ${PACKAGE_VERSION})")
