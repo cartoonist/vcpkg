@@ -1,0 +1,12 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 571d0d9..4fa9272 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -15,6 +15,7 @@ include(VERSION.cmake)
+ set(CPACK_GENERATOR "TGZ;TBZ2;ZIP")
+ set(CPACK_SOURCE_GENERATOR "TGZ;TBZ2;ZIP")
+ include(ProjectCPack)
++include(GNUInstallDirs)
+ 
+ ## Project options ##
+ option(BUILD_SHARED_LIBS "Set to OFF to build static libraries" ON)
