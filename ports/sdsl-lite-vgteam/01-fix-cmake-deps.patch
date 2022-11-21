@@ -1,0 +1,75 @@
+diff --git a/external/Findlibdivsufsort.cmake b/external/Findlibdivsufsort.cmake
+new file mode 100644
+index 0000000..1a8bd0c
+--- /dev/null
++++ b/external/Findlibdivsufsort.cmake
+@@ -0,0 +1,69 @@
++## Add libdivsufsort
++if(libdivsufsort_INCLUDE_DIRS)
++  set(libdivsufsort_FIND_QUIETLY TRUE)
++else()
++  # Try pkg-config, first.
++  find_package(PkgConfig QUIET)
++  pkg_check_modules(libdivsufsort QUIET libdivsufsort>=2.0.0)
++  # If libdivsufsort_INCLUDE_DIRS is not set, this searches for the header/library file.
++  find_path(libdivsufsort_INCLUDE_DIRS divsufsort.h)
++  find_library(libdivsufsort_LIBRARIES divsufsort)
++  if(libdivsufsort_FOUND)
++    if(libdivsufsort_VERSION)
++      message(STATUS "Found libdivsufsort (version ${libdivsufsort_VERSION})")
++    else()
++      message(STATUS "Found libdivsufsort (version unknown)")
++    endif(libdivsufsort_VERSION)
++  endif(libdivsufsort_FOUND)
++endif(libdivsufsort_INCLUDE_DIRS)
++
++## handle the QUIETLY and REQUIRED arguments and set libdivsufsort_FOUND to TRUE if
++## all listed variables are TRUE
++include(FindPackageHandleStandardArgs)
++find_package_handle_standard_args(libdivsufsort DEFAULT_MSG libdivsufsort_INCLUDE_DIRS libdivsufsort_LIBRARIES)
++
++mark_as_advanced(libdivsufsort_FOUND libdivsufsort_VERSION libdivsufsort_INCLUDE_DIRS libdivsufsort_LIBRARIES)
++
++# Define `libdivsufsort::libdivsufsort` imported target
++if(libdivsufsort_FOUND AND NOT TARGET libdivsufsort::libdivsufsort)
++  add_library(libdivsufsort::libdivsufsort INTERFACE IMPORTED)
++  set_target_properties(libdivsufsort::libdivsufsort PROPERTIES
++    INTERFACE_INCLUDE_DIRECTORIES "${libdivsufsort_INCLUDE_DIRS}"
++    INTERFACE_LINK_LIBRARIES "${libdivsufsort_LIBRARIES}"
++    INTERFACE_LINK_DIRECTORIES "${libdivsufsort_LIBRARY_DIRS}")
++endif()
++
++## Add libdivsufsort64
++if(libdivsufsort64_INCLUDE_DIRS)
++  set(libdivsufsort64_FIND_QUIETLY TRUE)
++else()
++  # Try pkg-config, first.
++  find_package(PkgConfig QUIET)
++  pkg_check_modules(libdivsufsort64 QUIET libdivsufsort64>=2.0.0)
++  # If libdivsufsort64_INCLUDE_DIRS is not set, this searches for the header/library file.
++  find_path(libdivsufsort64_INCLUDE_DIRS divsufsort64.h)
++  find_library(libdivsufsort64_LIBRARIES divsufsort64)
++  if(libdivsufsort64_FOUND)
++    if(libdivsufsort64_VERSION)
++      message(STATUS "Found libdivsufsort64 (version ${libdivsufsort64_VERSION})")
++    else()
++      message(STATUS "Found libdivsufsort64 (version unknown)")
++    endif(libdivsufsort64_VERSION)
++  endif(libdivsufsort64_FOUND)
++endif(libdivsufsort64_INCLUDE_DIRS)
++
++## handle the QUIETLY and REQUIRED arguments and set libdivsufsort64_FOUND to TRUE if
++## all listed variables are TRUE
++include(FindPackageHandleStandardArgs)
++find_package_handle_standard_args(libdivsufsort64 DEFAULT_MSG libdivsufsort64_INCLUDE_DIRS libdivsufsort64_LIBRARIES)
++
++mark_as_advanced(libdivsufsort64_FOUND libdivsufsort64_VERSION libdivsufsort64_INCLUDE_DIRS libdivsufsort64_LIBRARIES)
++
++# Define `libdivsufsort::libdivsufsort64` imported target
++if(libdivsufsort64_FOUND AND NOT TARGET libdivsufsort::libdivsufsort64)
++  add_library(libdivsufsort::libdivsufsort64 INTERFACE IMPORTED)
++  set_target_properties(libdivsufsort::libdivsufsort64 PROPERTIES
++    INTERFACE_INCLUDE_DIRECTORIES "${libdivsufsort64_INCLUDE_DIRS}"
++    INTERFACE_LINK_LIBRARIES "${libdivsufsort64_LIBRARIES}"
++    INTERFACE_LINK_DIRECTORIES "${libdivsufsort64_LIBRARY_DIRS}")
++endif()

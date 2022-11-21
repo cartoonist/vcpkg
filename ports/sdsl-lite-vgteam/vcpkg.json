@@ -1,0 +1,22 @@
+{
+  "name": "sdsl-lite-vgteam",
+  "version-string": "2.3.1",
+  "port-version": 1,
+  "description": "The Succinct Data Structure Library (vgteam fork)",
+  "homepage": "https://github.com/vgteam/sdsl-lite",
+  "license": "GPL-3.0-or-later",
+  "supports": "linux | osx",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    },
+    {
+      "name": "libdivsufsort"
+    }
+  ]
+}
