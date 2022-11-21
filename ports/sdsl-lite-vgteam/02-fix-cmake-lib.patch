@@ -1,0 +1,15 @@
+diff --git a/lib/CMakeLists.txt b/lib/CMakeLists.txt
+index b2e606e..ee12c34 100644
+--- a/lib/CMakeLists.txt
++++ b/lib/CMakeLists.txt
+@@ -1,9 +1,8 @@
+ include_directories(#"${CMAKE_CURRENT_SOURCE_DIR}/../include"
+         "${CMAKE_CURRENT_BINARY_DIR}/../include"
+-        "${CMAKE_CURRENT_BINARY_DIR}/../external/libdivsufsort/include"
++	"${libdivsufsort_INCLUDE_DIRS}"
+         )
+ 
+-
+ file(GLOB libFiles RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp") # select all .cpp-files
+ if(MSVC)
+     file(GLOB headerFiles RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  "${CMAKE_CURRENT_SOURCE_DIR}/../include/sdsl/*.hpp") # select all .hpp-files
