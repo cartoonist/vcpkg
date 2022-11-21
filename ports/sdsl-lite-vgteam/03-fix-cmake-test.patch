@@ -1,0 +1,18 @@
+diff --git a/test/CMakeLists.txt b/test/CMakeLists.txt
+index 2878e53..f11c757 100644
+--- a/test/CMakeLists.txt
++++ b/test/CMakeLists.txt
+@@ -30,11 +30,11 @@ CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/compile_test.cpp.cmake"
+ FILE(GLOB test_sources ${CMAKE_CURRENT_SOURCE_DIR}/*_test.cpp)
+ 
+ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/../include
+-                    ${CMAKE_CURRENT_BINARY_DIR}/../external/libdivsufsort/include
++                    ${libdivsufsort_INCLUDE_DIRS}
+                     ${gtest_SOURCE_DIR}/include
+ )
+ 
+-LINK_LIBRARIES(sdsl gtest divsufsort divsufsort64)
++LINK_LIBRARIES(sdsl gtest libdivsufsort::libdivsufsort libdivsufsort::libdivsufsort64)
+ 
+ ADD_EXECUTABLE(int_vector_generator EXCLUDE_FROM_ALL int_vector_generator.cpp)
+ ADD_EXECUTABLE(bit_vector_generator EXCLUDE_FROM_ALL bit_vector_generator.cpp)
