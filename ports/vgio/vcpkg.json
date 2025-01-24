@@ -22,7 +22,7 @@
       "name": "htslib"
     },
     {
-      "name": "protobuf"
+      "name": "protobuf-3"
     },
     {
       "name": "jansson"
