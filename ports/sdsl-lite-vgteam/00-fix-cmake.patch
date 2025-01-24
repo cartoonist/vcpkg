@@ -1,11 +1,11 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 99ab32e..50a2097 100644
+index 3a38fc65..f36f0f68 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -43,7 +43,7 @@ endif()
  
  if( CMAKE_COMPILER_IS_GNUCXX )
-     append_cxx_compiler_flags("-std=c++14 -Wall -Wextra -DNDEBUG" "GCC" CMAKE_CXX_FLAGS)
+     append_cxx_compiler_flags("-std=c++17 -Wall -Wextra -DNDEBUG" "GCC" CMAKE_CXX_FLAGS)
 -    append_cxx_compiler_flags("-O3 -ffast-math -funroll-loops" "GCC" CMAKE_CXX_OPT_FLAGS)
 +    append_cxx_compiler_flags("-O3 -ffast-math -funroll-loops" "GCC" CMAKE_CXX_FLAGS)
      if ( CODE_COVERAGE )
@@ -13,13 +13,13 @@ index 99ab32e..50a2097 100644
      endif()
 @@ -52,11 +52,11 @@ else()
      if( CMAKE_COMPILER_IS_CLANGXX )
- 		append_cxx_compiler_flags("-std=c++14 -DNDEBUG" "CLANG" CMAKE_CXX_FLAGS)
+ 		append_cxx_compiler_flags("-std=c++17 -DNDEBUG" "CLANG" CMAKE_CXX_FLAGS)
  		append_cxx_compiler_flags("-stdlib=libc++" "CLANG" CMAKE_CXX_FLAGS)
 -		append_cxx_compiler_flags("-O3 -ffast-math -funroll-loops -D__extern_always_inline=\"extern __always_inline\" " "CLANG" CMAKE_CXX_OPT_FLAGS)
 +		append_cxx_compiler_flags("-O3 -ffast-math -funroll-loops -D__extern_always_inline=\"extern __always_inline\" " "CLANG" CMAKE_CXX_FLAGS)
  	else()
          if( CMAKE_COMPILER_IS_INTEL )
-             append_cxx_compiler_flags("-std=c++14 -Wall -Wextra -DNDEBUG" "INTEL" CMAKE_CXX_FLAGS)
+             append_cxx_compiler_flags("-std=c++17 -Wall -Wextra -DNDEBUG" "INTEL" CMAKE_CXX_FLAGS)
 -            append_cxx_compiler_flags("-O3 -ffast-math -funroll-loops -no-inline-min-size -no-inline-max-size" "INTEL" CMAKE_CXX_OPT_FLAGS)
 +            append_cxx_compiler_flags("-O3 -ffast-math -funroll-loops -no-inline-min-size -no-inline-max-size" "INTEL" CMAKE_CXX_FLAGS)
          else()
