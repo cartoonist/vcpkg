@@ -9,6 +9,7 @@ vcpkg_from_github(
         01-fix-cmake-deps.patch
         02-fix-cmake-lib.patch
         03-fix-cmake-test.patch
+        04-fix-member-access.patch
 )
 
 vcpkg_cmake_configure(
