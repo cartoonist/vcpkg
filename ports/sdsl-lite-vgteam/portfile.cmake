@@ -1,15 +1,14 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO vgteam/sdsl-lite
-    REF ef23c5fe9899f2b0afa53a32162ed0b06aff0e89
-    SHA512 b1c67eda5f784006c0d372c7cb02a21d996b294770c102617af38ef964662a266b64e9fb7e91815efadc1e2dbec17bd1b615a57b2eaa2c9b3bebaee681c21173
+    REF cf1c355981d0ee91bdca4b1882f997863d0fda16
+    SHA512 14612dcdb4045bcf98f1e05fa016f401eb83382c38d9018bde382e76f34d72f1f844257af9201b1e88ccdb14d28b9ca7dc3b6ff2fc514dbebbe57217555cf18a
     HEAD_REF master
     PATCHES
         00-fix-cmake.patch
         01-fix-cmake-deps.patch
         02-fix-cmake-lib.patch
         03-fix-cmake-test.patch
-        04-fix-member-access.patch
 )
 
 vcpkg_cmake_configure(
