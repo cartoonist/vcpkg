@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index e90d1c9..8a780fb 100644
+index a80916e..c643a3c 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -3,15 +3,16 @@ cmake_minimum_required(VERSION 3.10)
@@ -22,37 +22,40 @@ index e90d1c9..8a780fb 100644
  option(OPTIMIZE "Build with optimization" ON)
  
  # TODO: We can only do out-of-source builds!
-@@ -82,20 +83,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+@@ -82,23 +83,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
    
    set (OMP_INCLUDE_FLAGS "-I${OMP_INCLUDE_PATH}")
    set (OMP_LIB_FLAGS "-L${OMP_LIB_PATH}")
 -  
--  # We also need manual libdl for some reason, so find it properly
+-  # We also might need manual libdl for some reason, so find it properly
 -  find_path(DL_LIB_PATH libdl.dylib
--            PATHS "${HOMEBREW_PREFIX}/lib" /opt/local/lib /usr/local/lib /usr/lib /lib
--            REQUIRED)
--  if ("${DL_LIB_PATH}" STREQUAL "")
--    # REQUIRED is a new CMake feature
--    message(FATAL_ERROR "Could not find libdl.dylib")
+-            PATHS "${HOMEBREW_PREFIX}/lib" /opt/local/lib /usr/local/lib /usr/lib /lib)
+-  if ("${DL_LIB_PATH}" STREQUAL "DL_LIB_PATH-NOTFOUND")
+-    # On new (10.14+?) MacOS, there is no longer a libdl that is libSystem wearing a hat.
+-    # See <https://github.com/meetecho/janus-gateway/issues/1486#issuecomment-451542851>
+-    # But since libSystem is just the standard library, the functions are all already there.
+-    # So don't try to link anything.
+-    message("Could not find libdl.dylib; hoping it is not needed")
+-    set (DL_LIB_FLAGS "")
 -  else()
+-    # On old MacOS, we have needed to link against libdl. So if we found it, use it.
 -    message("Found libdl libraries in ${DL_LIB_PATH}")
+-    set (DL_LIB_FLAGS "-L${DL_LIB_PATH}" -ldl)
 -  endif()
--  
--  set (DL_LIB_FLAGS "-L${DL_LIB_PATH}")
 -  
    set (OpenMP_C "${CMAKE_C_COMPILER}")
    set (OpenMP_C_FLAGS " -Xpreprocessor -fopenmp ${OMP_INCLUDE_FLAGS} ${OMP_LIB_FLAGS}")
    set (OpenMP_C_LIB_NAMES "libomp" "libgomp" "libiomp5")
-@@ -113,7 +100,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+@@ -116,7 +100,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
    
-   # Mac needs libdl and libomp when linking the library and a hint on where to look for them
+   # Mac needs libomp when linking the library and a hint on where to look for them
    # Mac doesn't have $ORIGIN for RPaths. We might not be able to produce a working Mac wheel for Python bindings.
--  set(PLATFORM_EXTRA_LIB_FLAGS -ldl -lomp ${DL_LIB_FLAGS} ${OMP_LIB_FLAGS})
+-  set(PLATFORM_EXTRA_LIB_FLAGS -lomp ${DL_LIB_FLAGS} ${OMP_LIB_FLAGS})
 +  set(PLATFORM_EXTRA_LIB_FLAGS -ldl -lomp ${OMP_LIB_FLAGS})
    
    # Mac needs install names set after installation
    SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-@@ -149,41 +136,132 @@ include_directories("${PROJECT_SOURCE_DIR}")
+@@ -152,41 +136,132 @@ include_directories("${PROJECT_SOURCE_DIR}")
  # Add external projects
  include(ExternalProject)
  
@@ -211,8 +214,8 @@ index e90d1c9..8a780fb 100644
 +find_package(mio CONFIG REQUIRED)
  
  if (BUILD_PYTHON_BINDINGS)
-     # Binder (because some generated bindings depend on headers packaged with Binder)
-@@ -263,9 +341,6 @@ if (BUILD_PYTHON_BINDINGS)
+ 
+@@ -271,9 +346,6 @@ if (BUILD_PYTHON_BINDINGS)
  endif()
  
  
@@ -222,7 +225,7 @@ index e90d1c9..8a780fb 100644
  # set up our target executable and specify its dependencies and includes
  add_library(bdsg_objs OBJECT
    ${bdsg_DIR}/src/eades_algorithm.cpp
-@@ -293,14 +368,12 @@ set(bdsg_INCLUDES
+@@ -302,14 +374,12 @@ set(bdsg_INCLUDES
  
  # Targets we depend on that are real library targets that we can install.
  set(bdsg_TARGET_DEPS
@@ -243,7 +246,7 @@ index e90d1c9..8a780fb 100644
  
  set(bdsg_LIBS
    ${bdsg_TARGET_DEPS}
-@@ -310,23 +383,17 @@ if (BUILD_PYTHON_BINDINGS)
+@@ -319,23 +389,17 @@ if (BUILD_PYTHON_BINDINGS)
      add_dependencies(bdsg_objs binder)
  endif()
  
@@ -274,7 +277,7 @@ index e90d1c9..8a780fb 100644
  else()
      # Set all the libs as public dependencies of the object library
      target_link_libraries(bdsg_objs PUBLIC ${bdsg_LIBS})
-@@ -345,15 +412,31 @@ set_target_properties(libbdsg PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/
+@@ -354,15 +418,31 @@ set_target_properties(libbdsg PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/
  # actual library. On Mac, we always need to do this, because you can't link a
  # library there without the libraries it depends on at runtime.
  target_link_libraries(libbdsg PUBLIC ${bdsg_LIBS})
@@ -307,7 +310,7 @@ index e90d1c9..8a780fb 100644
          LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
          PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
          PRIVATE_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-@@ -361,16 +444,10 @@ install(TARGETS libbdsg
+@@ -370,16 +450,10 @@ install(TARGETS libbdsg
  # Install headers separately. See <https://stackoverflow.com/a/54285948>
  install(DIRECTORY ${bdsg_DIR}/include/bdsg
          DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
