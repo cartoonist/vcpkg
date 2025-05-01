@@ -1,8 +1,20 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 571d0d9..4fa9272 100644
+index 8297a3a..fb3d768 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -15,6 +15,7 @@ include(VERSION.cmake)
+@@ -1,10 +1,9 @@
+ ### cmake file for building libdivsufsort Package ###
+-cmake_minimum_required(VERSION 2.4.4)
++cmake_minimum_required(VERSION 3.10)
+ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
+ include(AppendCompilerFlags)
+ 
+ ## Project information ##
+-cmake_policy(SET CMP0048 OLD) # no more project version warnings
+ project(libdivsufsort C)
+ set(PROJECT_VENDOR "Yuta Mori")
+ set(PROJECT_CONTACT "yuta.256@gmail.com")
+@@ -16,6 +15,7 @@ include(VERSION.cmake)
  set(CPACK_GENERATOR "TGZ;TBZ2;ZIP")
  set(CPACK_SOURCE_GENERATOR "TGZ;TBZ2;ZIP")
  include(ProjectCPack)
