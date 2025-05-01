@@ -3,8 +3,7 @@ index f2a41c2..02fdb98 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,67 +1,71 @@
--cmake_minimum_required(VERSION 2.6)
-+cmake_minimum_required(VERSION 3.0)
+ cmake_minimum_required(VERSION 2.8...3.13)
 +project(dynamic)
  
  option(USE_OPENMP "Enable multi-threading" OFF)
